@@ -1,0 +1,16 @@
+{
+  "name": "@ondash/schemas",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build:ts": "bash scripts/generate-typescript.sh",
+    "build:py": "bash scripts/generate-python.sh",
+    "build": "npm run build:ts && npm run build:py",
+    "version": "npm run build && git add -A",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  }
+}
