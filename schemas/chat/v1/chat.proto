@@ -18,7 +18,7 @@ message ContentBlock {
     TextBlock text = 2;
     ConfirmationBlock confirmation = 3;
     ChartBlock chart = 4;
-    DataPreviewBlock data_preview = 5;
+   
   }
 }
 
@@ -33,6 +33,12 @@ message ConfirmationBlock {
   string severity = 4;
   repeated Action actions = 5;
   string context = 6;  // JSON string
+}
+message ChartBlock {
+    string chart_type = 1;
+    string data = 2;
+    string config = 3;
+
 }
 
 message Action {

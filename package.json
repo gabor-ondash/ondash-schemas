@@ -1,5 +1,5 @@
 {
-  "name": "@ondash/schemas",
+  "name": "@ondash-ai/schemas",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,5 +12,8 @@
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
+  },
+  "devDependencies": {
+    "ts-proto": "^2.4.0"
   }
 }
