@@ -6,6 +6,10 @@
   "scripts": {
     "build:ts": "bash scripts/generate-typescript.sh",
     "build:py": "bash scripts/generate-python.sh",
+    "kafka": "bash scripts/publish-to-registry.sh",
+    "kafka:configure": "bash scripts/configure-topics.sh",
+    "kafka:test": "bash scripts/test-produce.sh",
+    "console:configure": "bash scripts/configure-console.sh",
     "build": "npm run build:ts && npm run build:py",
     "version": "npm run build && git add -A",
     "prepublishOnly": "npm run build"

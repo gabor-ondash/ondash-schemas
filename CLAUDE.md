@@ -23,21 +23,31 @@ This is a Protocol Buffer schema repository for Ondash AI, serving as the single
 
 ### Setup
 ```bash
-npm install  # Install dependencies (ts-proto) - required before first build
+npm install  # Install dependencies (ts-proto, jq) - required before first build
 ```
+
+Note: `jq` is also required for the Kafka registry upload script. Install with: `brew install jq` (macOS)
 
 ### Build Commands
 ```bash
-npm run build:ts    # Generate TypeScript code from proto files
-npm run build:py    # Generate Python code from proto files
+npm run build:ts    # Generate TypeScript code to ../ondash-frontend/src/types/schemas
+npm run build:py    # Generate Python code to ../ondash-llm/src/adapters/kafka/models
 npm run build       # Generate both TypeScript and Python
 ```
 
-### Publishing
+### Publishing to Schema Registry
+```bash
+npm run kafka                # Upload proto schemas to Redpanda Schema Registry at ondash:30081
+npm run kafka:configure      # Enable schema validation on Kafka topics
+npm run console:configure    # Configure Redpanda Console to deserialize protobuf messages (one-time setup)
+```
+
+### Versioning
 ```bash
 npm version [major|minor|patch]  # Automatically runs build and stages changes
-bash scripts/publish-to-registry.sh  # Upload proto descriptor to Kafka Schema Registry (requires registry at localhost:8081)
 ```
+
+Note: The TypeScript and Python builds output to sibling project directories, not to `dist/` and `src/` within this repo.
 
 ### Direct protoc Usage
 The scripts use these underlying commands:
@@ -71,8 +81,38 @@ protoc --python_out=src/yourcompany_schemas \
 
 **Versioning**: Schemas use package versioning (e.g., `chat.v1`) to support backward compatibility. Breaking changes should increment the version directory.
 
+## Kafka Topics and Schema Validation
+
+**Topics**: `chat-messages` and `upload-messages`
+
+**Schema Enforcement**: After uploading schemas, run `npm run kafka:configure` to enable validation. This ensures messages conform to the registered protobuf schemas.
+
+**Redpanda Console**: Run `npm run console:configure` (one-time setup) to enable protobuf deserialization in the UI at http://ondash:30011
+
+**Producing Messages**: Use `rpk` with the ondash profile:
+```bash
+# Chat messages (schema id: 2)
+rpk topic produce chat-messages --profile ondash --schema-id 2 --schema-type chat.v1.Message
+
+# Upload messages (schema id: 1)
+rpk topic produce upload-messages --profile ondash --schema-id 1 --schema-type upload.v1.Message
+```
+
+Or use the test script:
+```bash
+npm run kafka:test  # Produces test messages to both topics
+```
+
+Provide JSON matching the proto structure - `rpk` will encode to protobuf.
+
 ## Important Notes
 
-- The Python output directory is currently `src/yourcompany_schemas/` - this should be updated to match the actual company/project name
-- The `publish-to-registry.sh` script is configured for a local Schema Registry at `http://localhost:8081` and only handles the chat schema
-- npm lifecycle hooks run builds automatically before publishing (`prepublishOnly`) and on version bumps (`version`)
+- **Cross-project builds**: The build scripts output to sibling project directories:
+  - TypeScript → `../ondash-frontend/src/types/schemas`
+  - Python → `../ondash-llm/src/adapters/kafka/models`
+- **Redpanda Schema Registry**: Configured to upload to `http://ondash:30081` (running in Kubernetes)
+  - Port mappings: Schema Registry (30081), Kafka (30092), Pandaproxy (30082)
+  - The script uploads schemas in JSON format with `schemaType: "PROTOBUF"`
+  - Subject naming: `<topic-name>-value` (e.g., `chat-messages-value`)
+- **npm lifecycle hooks**: Builds run automatically before publishing (`prepublishOnly`) and on version bumps (`version`)
+- **Dependencies**: Requires `protoc` (Protocol Buffers compiler), `jq` (JSON processor), and `rpk` (Redpanda CLI) installed on the system
