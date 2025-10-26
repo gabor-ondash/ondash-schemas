@@ -1,4 +1,4 @@
-// schemas/chat.proto
+
 syntax = "proto3";
 
 package chat.v1;
@@ -39,4 +39,33 @@ message Action {
   string id = 1;
   string label = 2;
   string style = 3;
+}
+
+message MessageMetadata {
+  // Execution information
+  repeated ToolCall tool_calls = 1;
+  int32 execution_time_ms = 2;
+  
+  // Token usage (for AI responses)
+  int32 tokens_used = 3;
+  string model_version = 4;
+  
+  // Error information
+  optional string error_message = 5;
+  optional string error_code = 6;
+  
+  // User information
+  string user_id = 7;
+  string session_id = 8;
+  
+  // Backend processing
+  string processed_by_service = 9;
+  map<string, string> tags = 10;  // Custom key-value pairs
+}
+
+message ToolCall {
+  string tool_name = 1;
+  string tool_input = 2;  // JSON string
+  string tool_output = 3;  // JSON string
+  int32 duration_ms = 4;
 }
