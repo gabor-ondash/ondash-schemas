@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package chat.v1;
+
+option go_package = "github.com/looptroops/socket/internal/pb/schemas/chat/v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Base envelope for all events sent to Kafka topics
+message EventEnvelope {
+  google.protobuf.Timestamp timestamp = 1;
+  string conversation_id = 2;
+  string task_id = 3;
+  string scenario = 4;
+  string user_id = 5;
+  string company_id = 6;
+
+  // Event payload (one of)
+  oneof event {
+    StatusEvent status = 10;
+    TextEvent text = 11;
+    ChartEvent chart = 12;
+    ErrorEvent error = 13;
+    CompletionEvent completion = 14;
+  }
+}
+
+// Status update during scenario execution
+message StatusEvent {
+  string step = 1;                          // Current step name (e.g., "sql_generation")
+  string description = 2;                    // Human-readable description
+  int32 progress_percent = 3;                // Optional progress (0-100)
+  map<string, string> metadata = 4;          // Additional key-value metadata
+}
+
+// Text content to display
+message TextEvent {
+  string content = 1;                        // Text content
+  string language = 2;                       // Language code (e.g., "en", "hu")
+  TextPosition position = 3;                 // Position relative to other content
+
+  enum TextPosition {
+    STANDALONE = 0;                          // Independent text
+    BEFORE = 1;                              // Before main content (e.g., chart intro)
+    AFTER = 2;                               // After main content (e.g., chart analysis)
+  }
+}
+
+// Chart visualization
+message ChartEvent {
+  string chart_type = 1;                     // Chart type (e.g., "bar", "line", "pie")
+  string config_json = 2;                    // Serialized ECharts configuration JSON
+  ChartMetadata metadata = 3;                // Optional metadata
+
+  message ChartMetadata {
+    string title = 1;                        // Chart title
+    int32 data_points = 2;                   // Number of data points
+    string data_source = 3;                  // Data source identifier
+  }
+}
+
+// Error event
+message ErrorEvent {
+  ErrorSeverity severity = 1;                // Error severity level
+  string error_code = 2;                     // Error code (e.g., "SQL_TIMEOUT", "NOT_IMPLEMENTED")
+  string message = 3;                        // Human-readable error message
+  string step_name = 4;                      // Step where error occurred
+  bool recoverable = 5;                      // Whether error is recoverable
+  int32 retry_count = 6;                     // Number of retries attempted
+  map<string, string> details = 7;           // Additional error details
+
+  enum ErrorSeverity {
+    WARNING = 0;                             // Warning, execution continues
+    ERROR = 1;                               // Error, execution may stop
+    CRITICAL = 2;                            // Critical error, execution stops
+  }
+}
+
+// Task or conversation completion
+message CompletionEvent {
+  CompletionType type = 1;                   // Type of completion
+  string summary = 2;                        // Completion summary
+  repeated string result_ids = 3;            // IDs of generated results
+  int64 execution_time_ms = 4;               // Total execution time in milliseconds
+  map<string, string> metadata = 5;          // Additional completion metadata
+
+  enum CompletionType {
+    TASK_COMPLETED = 0;                      // Single task completed successfully
+    CONVERSATION_COMPLETED = 1;              // Entire conversation completed
+    TASK_FAILED = 2;                         // Single task failed
+  }
+}

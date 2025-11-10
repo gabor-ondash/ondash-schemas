@@ -1,87 +1,115 @@
-
 syntax = "proto3";
 
 package chat.v1;
 
+option go_package = "github.com/looptroops/socket/internal/pb/schemas/chat/v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Chat message in a conversation (user queries and assistant responses)
 message Message {
-  string id = 1;
-  string chat_id = 2;
-  string role = 3;  // "user" | "assistant" | "system"
-  int64 timestamp = 4;
-  repeated ContentBlock content = 5;
-  MessageMetadata metadata = 6;
+  string id = 1;                              // Unique message ID
+  string conversation_id = 2;                 // Conversation ID
+  string role = 3;                            // "user" | "assistant" | "system"
+  google.protobuf.Timestamp timestamp = 4;    // Message timestamp
+  repeated ContentBlock content = 5;          // Message content blocks
+  MessageMetadata metadata = 6;               // Message metadata
 }
 
+// Content block within a message
 message ContentBlock {
-  string type = 1;
+  string type = 1;                            // Block type identifier
   oneof block {
     TextBlock text = 2;
-    ConfirmationBlock confirmation = 3;
-    ChartBlock chart = 4;
+    ChartBlock chart = 3;
+    ConfirmationBlock confirmation = 4;
     DataPreviewBlock data_preview = 5;
   }
 }
 
+// Text content block
 message TextBlock {
-  string text = 1;
+  string text = 1;                            // Text content
+  string language = 2;                        // Optional language code
 }
 
-message ConfirmationBlock {
-  string id = 1;
-  string title = 2;
-  string message = 3;
-  string severity = 4;
-  repeated Action actions = 5;
-  string context = 6;  // JSON string
-}
-
+// Chart visualization block
 message ChartBlock {
-  string chart_type = 1;
-  string data = 2;
-  string config = 3;
+  string chart_type = 1;                      // Chart type (e.g., "bar", "line")
+  string config_json = 2;                     // Serialized ECharts configuration
+  string title = 3;                           // Optional chart title
 }
 
+// Confirmation/dialog block (for user confirmations)
+message ConfirmationBlock {
+  string id = 1;                              // Confirmation ID
+  string title = 2;                           // Dialog title
+  string message = 3;                         // Dialog message
+  string severity = 4;                        // Severity level
+  repeated Action actions = 5;                // Available actions
+  string context_json = 6;                    // Additional context as JSON
+}
+
+// Data preview block (for showing tabular data)
 message DataPreviewBlock {
-  repeated string columns = 1;
-  repeated DataRow rows = 2;
-  int32 total_rows = 3;
+  repeated string columns = 1;                // Column names
+  repeated DataRow rows = 2;                  // Data rows
+  int32 total_rows = 3;                       // Total number of rows (if paginated)
+  int32 displayed_rows = 4;                   // Number of displayed rows
 }
 
+// Single row of data
 message DataRow {
-  repeated string values = 1;
+  repeated string values = 1;                 // Cell values as strings
 }
 
+// Action button
 message Action {
-  string id = 1;
-  string label = 2;
-  string style = 3;
+  string id = 1;                              // Action ID
+  string label = 2;                           // Button label
+  string style = 3;                           // Button style (e.g., "primary", "danger")
 }
 
+// Message metadata
 message MessageMetadata {
+  // Task decomposition info (for assistant messages)
+  repeated TaskInfo tasks = 1;                // Tasks created for this message
+
   // Execution information
-  repeated ToolCall tool_calls = 1;
-  int32 execution_time_ms = 2;
-  
+  repeated ToolCall tool_calls = 2;           // Tools called during execution
+  int64 execution_time_ms = 3;                // Total execution time
+
   // Token usage (for AI responses)
-  int32 tokens_used = 3;
-  string model_version = 4;
-  
+  int32 tokens_used = 4;                      // Tokens consumed
+  string model_version = 5;                   // Model version used
+
   // Error information
-  optional string error_message = 5;
-  optional string error_code = 6;
-  
+  optional string error_message = 6;          // Error message if failed
+  optional string error_code = 7;             // Error code
+
   // User information
-  string user_id = 7;
-  string session_id = 8;
-  
+  string user_id = 8;                         // User ID
+  string company_id = 9;                      // Company ID
+
   // Backend processing
-  string processed_by_service = 9;
-  map<string, string> tags = 10;  // Custom key-value pairs
+  string processed_by_service = 10;           // Service that processed the message
+  map<string, string> tags = 11;              // Custom key-value tags
 }
 
+// Task information
+message TaskInfo {
+  string task_id = 1;                         // Task ID
+  string description = 2;                     // Task description
+  string scenario = 3;                        // Scenario type
+  string state = 4;                           // Task state
+  optional string error = 5;                  // Error if failed
+}
+
+// Tool call information
 message ToolCall {
-  string tool_name = 1;
-  string tool_input = 2;  // JSON string
-  string tool_output = 3;  // JSON string
-  int32 duration_ms = 4;
+  string tool_name = 1;                       // Tool name
+  string tool_input_json = 2;                 // Tool input as JSON
+  string tool_output_json = 3;                // Tool output as JSON
+  int32 duration_ms = 4;                      // Execution duration
+  optional string error = 5;                  // Error if failed
 }

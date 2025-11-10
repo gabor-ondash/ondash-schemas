@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package upload.v1;
 
+option go_package = "github.com/looptroops/socket/internal/pb/schemas/upload/v1";
+
 message Message {
   string id = 1;
   string filename = 2;
