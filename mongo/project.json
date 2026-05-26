@@ -55,6 +55,34 @@
         "accountancy": { "allOf": [{ "$ref": "#/$defs/Accountancy" }], "default": {} }
       }
     },
+    "EmailSesParams": {
+      "title": "EmailSesParams",
+      "type": "object",
+      "properties": {
+        "email_address": { "type": "string", "default": "" }
+      }
+    },
+    "EmailSmtpParams": {
+      "title": "EmailSmtpParams",
+      "type": "object",
+      "properties": {
+        "host": { "type": "string", "default": "" },
+        "port": { "type": "integer", "default": 587 },
+        "username": { "type": "string", "default": "" },
+        "password": { "type": "string", "default": "" },
+        "from_address": { "type": "string", "default": "" },
+        "use_tls": { "type": "boolean", "default": true }
+      }
+    },
+    "EmailConnectionParams": {
+      "title": "EmailConnectionParams",
+      "type": "object",
+      "properties": {
+        "service_type": { "type": "string", "enum": ["ses", "smtp"], "default": "ses" },
+        "ses": { "allOf": [{ "$ref": "#/$defs/EmailSesParams" }], "default": {} },
+        "smtp": { "allOf": [{ "$ref": "#/$defs/EmailSmtpParams" }], "default": {} }
+      }
+    },
     "ConnectionBase": {
       "title": "ConnectionBase",
       "type": "object",
