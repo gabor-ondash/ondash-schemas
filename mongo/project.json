@@ -12,7 +12,7 @@
     "ConnectionType": {
       "title": "ConnectionType",
       "type": "string",
-      "enum": ["FILESYSTEM", "SQLDATABASE", "EMAIL", "API", "AUDITXML", "EVENTS"]
+      "enum": ["FILESYSTEM", "SQLDATABASE", "EMAIL", "API", "AUDITXML", "EVENTS", "BANK", "NAV_ONLINE", "EIT_DIGITAL", "GOOGLE_WORKSPACE"]
     },
     "Email": {
       "title": "Email",

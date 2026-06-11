@@ -51,6 +51,7 @@
         "raw": { "type": "string", "default": "" },
         "state": { "type": "string", "default": "uploaded" },
         "errors": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
         "created_at": { "type": ["string", "null"], "format": "date-time", "default": null },
         "modified_at": { "type": ["string", "null"], "format": "date-time", "default": null }
       }
