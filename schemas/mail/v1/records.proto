@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package mail.v1;
+
+option go_package = "github.com/looptroops/socket/internal/pb/schemas/mail/v1";
+
+import "google/protobuf/timestamp.proto";
+
+// =============================================================================
+// DB-RECORD CONTRACTS — NOT Kafka messages.
+//
+// These messages are the canonical field contract for the persisted mail and
+// document tables shared across the ONDASH backends (platform backend owns the
+// store; grants/renting/finan read it). Each backend hand-writes a SQLModel
+// that matches these fields. They are deliberately kept separate from
+// events.proto so DB-schema evolution and Kafka wire-event evolution do not
+// collide.
+//
+// IMPORTANT: do NOT register these in the Redpanda schema registry — they are
+// never put on a Kafka topic. Only events.proto is registered.
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// MailStatus — triage state of a persisted mail
+// ---------------------------------------------------------------------------
+enum MailStatus {
+  MAIL_STATUS_UNSPECIFIED = 0;  // treated as NEW
+  MAIL_STATUS_NEW = 1;
+  MAIL_STATUS_APPROVED = 2;
+  MAIL_STATUS_EXCLUDED = 3;
+}
+
+// ---------------------------------------------------------------------------
+// MailRecord — a persisted incoming mail (one row in the per-company `mail`
+// table). Populated by the platform backend's mail.events consumer.
+// ---------------------------------------------------------------------------
+message MailRecord {
+  string id = 1;                                  // uuid (schema-per-company, not ObjectId)
+  string project_id = 2;
+  string from = 3;
+  repeated string to = 4;
+  repeated string cc = 5;
+  string subject = 6;
+  string body_text = 7;
+  string body_html = 8;
+  string s3_bucket = 9;                           // raw .eml location
+  string s3_key = 10;
+  google.protobuf.Timestamp received_at = 11;
+  string message_id = 12;                         // RFC822 Message-ID (dedup key)
+  string in_reply_to = 13;
+  repeated string references = 14;
+  MailStatus status = 15;                         // default NEW
+  repeated MailAttachmentRecord attachments = 16;
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp modified_at = 18;
+}
+
+// ---------------------------------------------------------------------------
+// MailAttachmentRecord — one row in the per-company `mail_attachment` table.
+// Every attachment is also materialised as a DocumentRecord; document_id links
+// back to it.
+// ---------------------------------------------------------------------------
+message MailAttachmentRecord {
+  string id = 1;
+  string mail_id = 2;
+  string filename = 3;
+  string content_type = 4;
+  int64 size_bytes = 5;
+  string s3_key = 6;
+  string s3_bucket = 7;
+  string document_id = 8;                         // FK to the Document row created from this attachment
+}
+
+// ---------------------------------------------------------------------------
+// DocumentRecord — a persisted document (one row in the per-company `document`
+// table). Mirrors the existing GraphQL Document type 1:1 so the type stays
+// byte-stable after the Mongo → Postgres migration.
+// ---------------------------------------------------------------------------
+message DocumentRecord {
+  string id = 1;
+  string project_id = 2;
+  string version = 3;
+  string title = 4;
+  string type = 5;                                // e.g. "ledger"
+  string state = 6;                               // new | uploaded | error | warning | revised
+  repeated string tags = 7;
+  string raw = 8;                                 // JSON string: {s3_path, original_filename}
+  DocumentContent content = 9;
+  repeated string errors = 10;
+  string source_mail_id = 11;                     // set when created from a MailAttachmentRecord
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp modified_at = 13;
+}
+
+// ---------------------------------------------------------------------------
+// DocumentContent — flexible content block. `params` is arbitrary JSON, which
+// proto3 cannot express cleanly, so it is carried as a serialized JSON string
+// and stored in a JSON DB column.
+// ---------------------------------------------------------------------------
+message DocumentContent {
+  string doc_type = 1;
+  string state = 2;
+  string params_json = 3;
+}
