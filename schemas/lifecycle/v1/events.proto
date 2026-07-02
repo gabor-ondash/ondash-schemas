@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package lifecycle.v1;
+
+option go_package = "github.com/looptroops/socket/internal/pb/schemas/lifecycle/v1";
+
+// =============================================================================
+// KAFKA TOPICS:
+//   - project.created → ProjectCreatedEvent
+//
+// Emitted by the backend when a project is created (a domain lifecycle event,
+// distinct from connector/connection events). The conductor consumes it to start
+// the Provision workflow. app_type selects which capabilities to provision.
+// =============================================================================
+
+message ProjectCreatedEvent {
+  string project_id = 1;
+  string app_type = 2;
+  string title = 3;
+  string schema_name = 4;
+  int64 timestamp = 5;
+}

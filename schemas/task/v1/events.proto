@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package task.v1;
+
+option go_package = "github.com/looptroops/socket/internal/pb/schemas/task/v1";
+
+// =============================================================================
+// KAFKA TOPICS:
+//   - task.cmd    → TaskEnvelope{command}  (conductor -> owning service)
+//   - task.result → TaskEnvelope{result}   (owning service -> conductor)
+//
+// The conductor's generic `call_service` bridge hands work to the owning service
+// (grants/finan/renting/mail/report-engine...) via task.cmd, then parks on the
+// Restate awakeable named by `awakeable_id` until the service replies on
+// task.result. Task-specific args/output travel as JSON in payload_json/result_json
+// (typed envelope + JSON blob, same pattern as llm.v1 AnswerEvent.content_json).
+// =============================================================================
+
+// Envelope carried on both topics (index 0). The oneof selects direction.
+message TaskEnvelope {
+  oneof payload {
+    TaskCommand command = 1;
+    TaskResult result = 2;
+  }
+}
+
+message TaskCommand {
+  string task = 1;          // e.g. create_tables, create_email_address, process_audit_xml
+  string awakeable_id = 2;  // Restate awakeable to resolve with the result
+  string project_id = 3;
+  string app_type = 4;      // routes app_type-specific tasks (e.g. create_tables)
+  string payload_json = 5;  // task-specific arguments, JSON-encoded
+}
+
+message TaskResult {
+  string task = 1;
+  string awakeable_id = 2;
+  string project_id = 3;
+  string status = 4;        // success | warning | error
+  string message = 5;
+  string result_json = 6;   // task-specific output, JSON-encoded
+}
