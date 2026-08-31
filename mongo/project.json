@@ -175,8 +175,8 @@
         "app_type": { "type": "string", "default": "monitoring" },
         "license": { "allOf": [{ "$ref": "#/$defs/License" }], "default": {} },
         "schema_name": { "type": "string", "default": "" },
-        "project_email_address": { "type": ["string", "null"], "default": null },
         "documents_synced": { "type": "boolean", "default": false },
+        "project_email_address": { "type": ["string", "null"], "default": null },
         "onlease": { "allOf": [{ "$ref": "#/$defs/OnleaseData" }], "default": null }
       }
     }
